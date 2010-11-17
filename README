@@ -1,0 +1,13 @@
+GStage is a ridiculous pet project to emulate the "Global Stage" IRC server
+made by QuarterDeck (a company purchased by Symantec). It is actually geared
+specifically NOT to be RFC-compliant, as the original server existed.
+
+It will also feature a few notable exploits, including a buffer overflow problem
+dealing with extra-long lines that prompted an entirely new version of mIRC.
+
+It's being written as a hobby and out of nostalgia, as this was the server run
+by the SciFi (now Syfy, yuck) channel at irc.scifi.com for a number of years
+before ultimately being shut down due to hemorraghing users (see the "history"
+section on http://www.malkier.net/ for the long drama leading up to it). As it's
+just a hobby project, it should probably never be used in a production setting,
+but if the SciFi channel can get away with it, hey, maybe you can too.
