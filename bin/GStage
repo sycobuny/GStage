@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+use lib qw(lib);
+use GStage;
+
+$0 = 'GStage';
+
+my ($app) = GStage->new('GStage', 'local');
+$app->run_server();
+
+exit 0;
