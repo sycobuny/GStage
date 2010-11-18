@@ -7,17 +7,20 @@ use IO::Select;
 use Method::Signatures;
 use Hash::Util::FieldHash qw(id);
 
+use User;
+#use Channel;
+
 # class variables
 Hash::Util::FieldHash::idhashes \ my(
-    %name,      # server name
-    %network,   # IRC network
-    %port,      # port clients will connect to
-    %socket,    # duh.
-    %banlist,   # user blacklist for connecting
-    %eventlist, # pending events, handled elsewhere
+    %name,        # server name
+    %network,     # IRC network
+    %port,        # port clients will connect to
+    %socket,      # duh.
+    %userlist,    # duh.
+    %channellist, # duh.
+    %banlist,     # user blacklist for connecting
+    %eventlist,   # pending events, handled elsewhere
 );
-
-my ($register);
 
 ########
 # public
@@ -25,20 +28,24 @@ my ($register);
 
 method new($class: $name, $network, $port = 6667) {
     my ($self) = bless(\my($o), ref($class)||$class);
-    my ($socket, $select, $eventlist, @sockets);
+    my ($socket, $select, $userlist, $eventlist, @sockets);
 
-    $name{id $self}      = $name;
-    $network{id $self}   = $network;
-    $port{id $self}      = $port;
-    $socket{id $self}    = $socket = IO::Socket::INET->new(
-        LocalAddr => "$name.$network",
+    $name{id $self}        = $name;
+    $network{id $self}     = $network;
+    $port{id $self}        = $port;
+    $socket{id $self}      = $socket = IO::Socket::INET->new(
+        LocalAddr => 'localhost', # "$name.$network",
         LocalPort => $port,
         Proto     => 'tcp',
         Listen    => 10,
     );
-    $banlist{id $self}   = {};
-    $eventlist{id $self} = $eventlist = {};
-    $self->$register(\(%name, %network, %port, %socket, %banlist, %eventlist));
+    $userlist{id $self}    = $userlist = {};
+    $channellist{id $self} = {};
+    $banlist{id $self}     = {};
+    $eventlist{id $self}   = $eventlist = {};
+    Hash::Util::FieldHash::register($self, \(
+        %name, %network, %port, %socket, %banlist, %eventlist
+    ));
 
     $select = IO::Select->new($socket);
 
@@ -51,7 +58,7 @@ method new($class: $name, $network, $port = 6667) {
             if ($rsocket == $socket) {
                 my ($csocket, $user);
 
-                $csocket = $rsocket->acccept();
+                $csocket = $rsocket->accept();
                 $csocket->blocking(1);
 
                 if ($self->is_banned($csocket)) {
@@ -60,14 +67,11 @@ method new($class: $name, $network, $port = 6667) {
                 } else {
                     $user = User->new($self, $csocket);
                     $select->add($csocket);
+                    $userlist{$user->id} = $user;
                 }
             } else {
-                my ($input);
-                if ($rsocket->sysread($input, 512)) {
-                    print "Yay! Got $input";
-                } else {
-                    print "sadface no input :(\n";
-                }
+                my ($user) = User->find_user($rsocket);
+                $user->read_data();
                 # read text from client
                 # dispatch events
             }
@@ -78,6 +82,8 @@ method new($class: $name, $network, $port = 6667) {
 
     $self;
 }
+
+method is_banned { 0 }
 
 method is_running { 1 }
 
