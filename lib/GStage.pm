@@ -87,12 +87,4 @@ method is_banned { 0 }
 
 method is_running { 1 }
 
-#########
-# private
-#########
-
-$register = method {
-    Hash::Util::FieldHash::register($self, @_);
-};
-
 1;
