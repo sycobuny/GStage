@@ -1,4 +1,4 @@
-package GStage;
+package Server;
 
 use warnings;
 use strict;

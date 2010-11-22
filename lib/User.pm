@@ -5,6 +5,9 @@ use strict;
 use IO::File;
 use Method::Signatures;
 use Hash::Util::FieldHash qw(id);
+use constant COMMANDRE => qr/^\s*([a-z]+)(?:\s+(.*))$/i;
+
+use User::Handlers;
 
 # class variables
 Hash::Util::FieldHash::idhashes \ our (
@@ -17,7 +20,7 @@ Hash::Util::FieldHash::idhashes \ our (
     %channels,  # the channels this user has joined
 );
 
-my (@masks);
+my (@masks, %commands);
 
 ########
 # public
@@ -62,7 +65,7 @@ method read_data {
         my ($line);
         local ($1, $2);
 
-        while ($input =~ /^([^\n]*)\n([^\n]*)/) {
+        while ($input =~ /^([^\n]*)\r?\n([^\n]*)/) {
             if ($fragment) {
                 $line = "$fragment$1";
                 $fragment = ''
@@ -79,7 +82,32 @@ method read_data {
 }
 
 method parse($line) {
-    print "the line I just got was $line!\n";
+    my ($command, $arguments);
+    local ($1, $2);
+
+    if ($line =~ COMMANDRE) {
+        ($command, $arguments) = ($1, $2);
+
+        unless (exists $commands{uc $command}) {
+            print "I don't understand $command\n";
+        } else {
+            my ($handler) = lc "handle_$command";
+            my (@arguments) = $arguments =~ $commands{uc $command}[1];
+            print "qr is @{[$commands{uc $command}[1]]}\n";
+            $arguments = {};
+
+            foreach my $argname (@{ $commands{$command}[0] }) {
+                if ($arguments[0] || $argname =~ /\?$/) {
+                    ($argname) = $argname =~ /(.*)\??$/;
+                    $arguments->{$argname} = shift(@arguments);
+                } else {
+                    print "Missing required argument $argname from $command\n";
+                }
+            }
+
+            $self->$handler($arguments);
+        }
+    }
 }
 
 method add_to_channel($channel) {
@@ -104,7 +132,12 @@ method hostmask {
 }
 
 method server { $server{id $self} }
+method socket { $socket{id $self} }
 method channels { values %{ $channels{id $self} } }
+
+################
+# initialization
+################
 
 foreach my $i (1..4) {
     if ((my $fh = IO::File->new)->open("etc/hostmasks.$i", 'r')) {
@@ -114,5 +147,17 @@ foreach my $i (1..4) {
         exit(0);
     }
 }
+
+%commands = (
+    JOIN => [
+        [ qw(channel key?) ],
+        qr/^\:?([&#][\S]+)(?:\s+(\S*))?$/
+    ],
+
+    PRIVMSG => [
+        [ qw(target message) ],
+        qr/^([&#]?[\S]+)\s+\:(.*)$/
+    ],
+);
 
 1;

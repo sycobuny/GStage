@@ -7,8 +7,6 @@ use lib qw(lib);
 use GStage;
 
 $0 = 'GStage';
-
-my ($app) = GStage->new('GStage', 'local');
-$app->run_server();
+my ($server) = Server->new('GStage', 'local');
 
 exit 0;
