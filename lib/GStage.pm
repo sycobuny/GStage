@@ -2,16 +2,18 @@ package Server;
 
 use warnings;
 use strict;
+use Method::Signatures;
+
 use IO::Socket::INET;
 use IO::Select;
-use Method::Signatures;
-use Hash::Util::FieldHash qw(id);
 
 use User;
 #use Channel;
 
 # class variables
-Hash::Util::FieldHash::idhashes \ my(
+our (%name, %network, %port, %socket, %userlist, %channellist, %banlist,
+     %eventlist);
+__PACKAGE__->variables(\(
     %name,        # server name
     %network,     # IRC network
     %port,        # port clients will connect to
@@ -20,14 +22,13 @@ Hash::Util::FieldHash::idhashes \ my(
     %channellist, # duh.
     %banlist,     # user blacklist for connecting
     %eventlist,   # pending events, handled elsewhere
-);
+));
 
 ########
 # public
 ########
 
-method new($class: $name, $network, $port = 6667) {
-    my ($self) = bless(\my($o), ref($class)||$class);
+method initialize($name, $network, $port = 6667) {
     my ($socket, $select, $userlist, $eventlist, @sockets);
 
     $name{id $self}        = $name;
@@ -43,9 +44,6 @@ method new($class: $name, $network, $port = 6667) {
     $channellist{id $self} = {};
     $banlist{id $self}     = {};
     $eventlist{id $self}   = $eventlist = {};
-    Hash::Util::FieldHash::register($self, \(
-        %name, %network, %port, %socket, %banlist, %eventlist
-    ));
 
     $select = IO::Select->new($socket);
 

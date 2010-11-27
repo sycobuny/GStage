@@ -7,21 +7,19 @@ package Timer;
 
 use warnings;
 use strict;
-use threads;
-use threads::shared;
-use Hash::Util::FieldHash qw(id);
 use Method::Signatures;
 
-Hash::Util::FieldHash::idhashes \ our (
-    %thread,
+use threads;
+use threads::shared;
+
+our (%time, %repeat, %block);
+__PACKAGE__->variables \(
     %time,
     %repeat,
     %block,
 );
 
-method new($class: $time, $repeat, $block) {
-    my ($self) = bless(\my($o), ref($class)||$class);
-
+method initialize($time, $repeat, $block) {
     $time{id $self} = $time;
     $repeat{id $self} = $repeat;
     $block{id $self} = $block;
@@ -33,11 +31,6 @@ method new($class: $time, $repeat, $block) {
             last unless $repeat;
         }
     });
-
-    Hash::Util::FieldHash::register($self);
-    Hash::Util::FieldHash::register($self, \(
-        %thread, %time, %repeat, %block
-    ));
 
     return $self;
 }

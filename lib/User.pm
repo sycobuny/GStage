@@ -2,15 +2,17 @@ package User;
 
 use warnings;
 use strict;
-use IO::File;
 use Method::Signatures;
+
+use IO::File;
 use Hash::Util::FieldHash qw(id);
 use constant COMMANDRE => qr/^\s*([a-z]+)(?:\s+(.*))$/i;
 
 use User::Handlers;
 
 # class variables
-Hash::Util::FieldHash::idhashes \ our (
+our (%server, %socket, %fragment, %nickname, %username, %mask, %channels);
+__PACKAGE__->variables(\(
     %server,    # the server we're connected to
     %socket,    # raw connection to the server
     %fragment,  # unfinished line fragment from the socket
@@ -18,7 +20,7 @@ Hash::Util::FieldHash::idhashes \ our (
     %username,  # IRC username
     %mask,      # the masked host (saving cycles)
     %channels,  # the channels this user has joined
-);
+));
 
 my (@masks, %commands);
 
@@ -26,8 +28,7 @@ my (@masks, %commands);
 # public
 ########
 
-method new($class: $server, $socket) {
-    my ($self) = bless(\my ($o), ref($class)||$class);
+method initialize($server, $socket) {
     my ($mask, @octets);
 
     $mask = '';
@@ -40,11 +41,6 @@ method new($class: $server, $socket) {
     $socket{id $self}   = $socket;
     $mask{id $self}     = $mask;
     $channels{id $self} = {};
-
-    Hash::Util::FieldHash::register($self);
-    Hash::Util::FieldHash::register($self, \(
-        %server, %socket, %fragment, %nickname, %username, %mask, %channels
-    ));
 
     return $self;
 }

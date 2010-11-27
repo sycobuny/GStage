@@ -4,6 +4,7 @@ use warnings;
 use strict;
 
 use lib qw(lib);
+use Object; # put it here so we don't have to anywhere else
 use GStage;
 
 $0 = 'GStage';
