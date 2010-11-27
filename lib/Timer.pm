@@ -13,11 +13,11 @@ use threads;
 use threads::shared;
 
 our (%time, %repeat, %block);
-__PACKAGE__->variables \(
+__PACKAGE__->variables(\(
     %time,
     %repeat,
     %block,
-);
+));
 
 method initialize($time, $repeat, $block) {
     $time{id $self} = $time;

@@ -5,7 +5,7 @@ use strict;
 
 use lib qw(lib);
 use Object; # put it here so we don't have to anywhere else
-use GStage;
+use Server;
 
 $0 = 'GStage';
 my ($server) = Server->new('GStage', 'local');
