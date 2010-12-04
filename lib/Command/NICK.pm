@@ -6,8 +6,7 @@ use strict;
 use Method::Signatures;
 
 our (%nickname);
-__PACKAGE__->variables(\%nickname);
-__PACKAGE__->readers('nickname');
+Class::self->readable_variables qw(nickname);
 
 method parse($arguments) {
     my ($n) = split(' ', $arguments);

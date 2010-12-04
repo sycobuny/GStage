@@ -6,8 +6,7 @@ use strict;
 use Method::Signatures;
 
 our (%channel);
-__PACKAGE__->variables(\%channel);
-__PACKAGE__->readers('channel');
+Class::self->readable_variables qw(channel);
 
 method parse($arguments) {
     my ($c) = split(' ', $arguments);

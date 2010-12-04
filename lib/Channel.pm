@@ -4,21 +4,26 @@ use warnings;
 use strict;
 use Method::Signatures;
 
-our (%name, %match);
-__PACKAGE__->variables(\(
-    %name,      # channel name, as presented on first join
-    %match,     # a matchable version, for hash keys/etc. (cached)
-    %key,       # a channel key, for auto-opping
-    %limit,     # a channel limit
-    %permanent, # whether the channel is permanent
-    %secret,    # whether the channel is secret
-    %topic,     # the topic for the channel
-    %userlist,  # list of all users on the channel
-    %oplist,    # list of all ops on the channel
-    %hoplist,   # list of all half ops on the channel
-    %voicelist, # list of all voices on the channel
-    %bozolist,  # a list of IPs banned from the channel
-));
+our (
+    %name,           # channel name, as presented on first join
+    %match,          # a matchable version, for hash keys/etc. (cached)
+    %key,            # a channel key, for auto-opping
+    %limit,          # a channel limit
+    %message_locked, # whether the channel is message locked
+    %topic_locked,   # whether the channel is topc lockfed
+    %permanent,      # whether the channel is permanent
+    %secret,         # whether the channel is secret
+    %topic,          # the topic for the channel
+    %userlist,       # list of all users on the channel
+    %oplist,         # list of all ops on the channel
+    %hoplist,        # list of all half ops on the channel
+    %voicelist,      # list of all voices on the channel
+    %bozolist,       # a list of IPs banned from the channel
+);
+Class::self->readable_variables qw(
+    name match key limit message_locked topic_locked permanent secret topic
+);
+Class::self->private_variables qw(userlist oplist hoplist voicelist bozolist);
 
 my (@spoofs);
 
@@ -26,9 +31,11 @@ method initialize($name, $key = '') {
     $name{id $self} = $name;
     $match{id $self} = $self->generate_match($name);
 
-    $limit{id $self}     = undef;
-    $permanent{id $self} = 0;
-    $secret{id $self}    = 0;
+    $limit{id $self}         = undef;
+    $messagelocked{id $self} = 1;
+    $topiclocked{id $self}   = 1;
+    $permanent{id $self}     = 0;
+    $secret{id $self}        = 0;
 
     $topic{id $self} = '(No topic set)';
 
@@ -70,6 +77,7 @@ method bozos   { keys %{ $bozolist{id $self} } }
               100 193 194 105 108 101 198 199 105 122 101 203 204 105 109 105
               116 209 210 120 099 101 101 100 101 100 218 219 111 221 114 117
               110 110 097 098 108 101 230 108 119 112 234 235 110 116 101 114
-              240 108 119 112 244 115 105 103 110 097 108 251 252 253 254 255);
+              240 108 119 112 244 115 105 103 110 097 108 251 252 253 254 255
+             );
 
 1;

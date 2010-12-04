@@ -6,8 +6,7 @@ use strict;
 use Method::Signatures;
 
 our (%channel, %target, %message);
-__PACKAGE__->variables(\(%channel, %target, %message));
-__PACKAGE__->readers( qw(channel target message) );
+Class::self->readable_variables qw(channel target message);
 
 my ($re) = qr/^([^ ]*) *([^ ]*) *:?(.*)$/;
 

@@ -6,8 +6,7 @@ use strict;
 use Method::Signatures;
 
 our (%message);
-__PACKAGE__->variables(\%message);
-__PACKAGE__->readers('message');
+Class::self->readable_variables qw(message);
 
 method parse($arguments) {
     $message{id $self} = $self->stripc($arguments);

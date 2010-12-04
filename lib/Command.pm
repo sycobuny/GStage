@@ -17,8 +17,7 @@ use Command::MODE;
 use Command::QUIT;
 
 our (%server, %origin, %arguments);
-__PACKAGE__->variables(\(%server, %origin, %arguments));
-__PACKAGE__->readers( qw(server origin arguments) );
+Class::self->readable_variables qw(server origin arguments);
 
 method new_from_command($class: $command, $server, $origin, $arguments) {
     my ($klass) = Class::get('Command::' . uc($command));

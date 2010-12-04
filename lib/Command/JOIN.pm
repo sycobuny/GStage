@@ -6,7 +6,7 @@ use strict;
 use Method::Signatures;
 
 our (%channels, %keys);
-__PACKAGE__->variables(\(%channels, %keys));
+Class::self->private_variables qw(channels keys);
 
 method initialize($server, $origin, $arguments) {
     $channels{id $self} = [];

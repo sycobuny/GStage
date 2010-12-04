@@ -6,8 +6,7 @@ use strict;
 use Method::Signatures;
 
 our (%target, %message);
-__PACKAGE__->variables(\(%target, %message));
-__PACKAGE__->readers( qw(target message) );
+Class::self->readable_variables qw(target message);
 
 my ($re) = qr/^([^\x20]*)\x20*:?(.*)/;
 

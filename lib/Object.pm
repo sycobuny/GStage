@@ -8,24 +8,63 @@ use Scalar::Util qw();
 use Hash::Util::FieldHash qw(id);
 
 use Class;
-
-unshift(@UNIVERSAL::ISA, __PACKAGE__);
+unshift(@UNIVERSAL::ISA, Class::self);
 
 my ($uuid) = 0;
 my ($generate_uuid) = sub { ++$uuid };
+my ($declare_variable);
 my (%objlookup);
 my (%vars);
 
-method variables($class:) {
-    my ($package) = ref($class) || $class;
+########
+# public
+########
 
-    Hash::Util::FieldHash::idhashes(@_);
-    foreach my $var (@_) {
-        $vars{$class} ||= [];
+method private_variables($class: @variables) {
+    my ($package) = Class::get($class);
 
-        push(@{ $vars{$package} }, $var)
-            if (ref($var) =~ /HASH/);
+    foreach my $variable (@variables) {
+        $class->$declare_variable($variable);
     }
+}
+
+method readable_variables($class: @variables) {
+    my ($package) = Class::get($class);
+
+    {
+        no strict 'refs';
+
+        foreach my $variable (@variables) {
+            my ($store) = $package->$declare_variable($variable);
+            my ($glob) = *{"$package\::$variable"}{GLOB};
+            die "Method $variable already exists in $package\n"
+                if (*$glob{CODE});
+
+            *$glob = method { $store->{id $self} };
+        }
+    }
+}
+
+method writeable_variables($class: @variables) {
+    my ($package) = Class::get($class);
+
+    {
+        no strict 'refs';
+
+        foreach my $variable (@variables) {
+            my ($store) = $package->$declare_variable($variable);
+            my ($glob) = *{"$package\::set_$variable"}{GLOB};
+            die "Method set_$variable already exists in $package\n"
+                if (*$glob{CODE});
+
+            *$glob = method($value) { $store->{id $self} = $value };
+        }
+    }
+}
+
+method public_variables($class: @variables) {
+    $class->readable_variables(@variables);
+    $class->writeable_variables(@variables);
 }
 
 method new($class:) {
@@ -36,8 +75,8 @@ method new($class:) {
     Scalar::Util::weaken($objlookup{$$self});
     Hash::Util::FieldHash::register($self);
 
-    foreach my $varpack ($package, $self->ancestors) {
-        Hash::Util::FieldHash::register($self, @{ $vars{$varpack} });
+    foreach my $varpack ($package->genealogy) {
+        Hash::Util::FieldHash::register($self, values %{ $vars{$varpack} });
     }
 
     $self->initialize(@_);
@@ -46,6 +85,7 @@ method new($class:) {
 }
 
 method ancestors($class:) {
+    local ($_);
     my ($package) = Class::get($class);
     my (@ancestors);
 
@@ -54,25 +94,23 @@ method ancestors($class:) {
         @ancestors = @{ $package . '::ISA' };
     }
 
-    unless (@ancestors) {
-        @ancestors = ($package eq 'Object') ? () : ('UNIVERSAL');
-    }
+    @ancestors = ($package eq 'Object') ? () : ('UNIVERSAL')
+        unless (@ancestors);
+    @ancestors, map { $_->ancestors() } @ancestors;
+}
 
-    {
-        local ($_);
-        return @ancestors, map { $_->ancestors() } @ancestors;
-    }
+method genealogy($class:) {
+    (Class::get($class), $class->ancestors);
 }
 
 method methods($class:) {
-    my ($package) = Class::get($class);
-    my (@ancestors) = ($package, $class->ancestors);
+    my (@classes) = $class->genealogy;
     my (%methods);
 
     {
         no strict 'refs';
 
-        foreach my $klass (@ancestors) {
+        foreach my $klass (@classes) {
             my ($entries) = *{ $klass . '::' }{HASH};
 
             foreach my $entry (keys %{ $entries }) {
@@ -84,70 +122,11 @@ method methods($class:) {
     keys %methods;
 }
 
-method variable_stores($class:) {
+method variables($class:) {
     local ($_);
-    my ($package) = Class::get($class);
-    my (@ancestors) = ($package, $class->ancestors);
+    my (@classes) = $class->genealogy;
 
-    map { $vars{$_} ? @{ $vars{$_} } : () } @ancestors;
-}
-
-method readers($class:) {
-    my ($package) = Class::get($class);
-    my (@readers) = @_;
-    my (@ancestors) = ($package, $class->ancestors);
-    my (@stores) = $class->variable_stores;
-
-    {
-        no strict 'refs';
-        R:foreach my $reader (@readers) {
-            A:foreach my $ancestor (@ancestors) {
-                my ($store) = *{$ancestor . '::' . $reader}{HASH};
-
-                if ($store) {
-                    my ($name) = "$package\::$reader";
-                    my ($method) = *{$name}{CODE};
-
-                    die "Method $reader already exists in $package\n"
-                        if ($method);
-
-                    *{$name} = method { $store->{id $self} };
-                    next R;
-                }
-            }
-
-            die "Could not find public store for $reader from $package\n";
-        }
-    }
-}
-
-method writers($class:) {
-    my ($package) = Class::get($class);
-    my (@writers) = @_;
-    my (@ancestors) = ($package, $class->ancestors);
-    my (@stores) = $class->variable_stores;
-
-    {
-        no strict 'refs';
-        W:foreach my $writer (@writers) {
-            A:foreach my $ancestor (@ancestors) {
-                my ($store) = *{$ancestor . '::' . $writer}{HASH};
-
-                if ($store) {
-                    my ($name) = "$package\::set_$writer";
-                    my ($method) = *{$name}{CODE};
-
-                    die "Method $writer already exists in $package\n"
-                        if ($method);
-
-                    *{$name} = method($value) { $store->{id $self} = $value };
-                    next W;
-                }
-            }
-
-            die "Could not find public store for $writer from $package\n";
-        }
-    }
+    map { $vars{$_} ? keys %{ $vars{$_} } : () } @classes;
 }
 
 method accessors($class:) {
@@ -157,5 +136,25 @@ method accessors($class:) {
 
 method initialize { }
 method class { ref($self) || 'Class' }
+
+#########
+# private
+#########
+
+$declare_variable = method($class: $name) {
+    my ($package) = Class::get($class);
+    my ($store);
+    $vars{$package} ||= {};
+
+    {
+        no strict 'refs';
+        $store = \%{"$package\::$name"};
+    }
+
+    Hash::Util::FieldHash::idhashes($store)
+        unless ($vars{$package}{$name} &&
+                (id($vars{$package}{$name}) == id($store)));
+    $vars{$package}{$name} = $store;
+};
 
 1;

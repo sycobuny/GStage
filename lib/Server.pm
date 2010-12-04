@@ -12,9 +12,7 @@ use User;
 #use Channel;
 
 # class variables
-our (%name, %network, %port, %socket, %userlist, %channellist, %banlist,
-     %eventlist);
-__PACKAGE__->variables(\(
+our (
     %name,        # server name
     %network,     # IRC network
     %port,        # port clients will connect to
@@ -23,7 +21,11 @@ __PACKAGE__->variables(\(
     %channellist, # duh.
     %banlist,     # user blacklist for connecting
     %eventlist,   # pending events, handled elsewhere
-));
+);
+Class::self->private_variables qw(
+    socket userlist channellist banlist eventlist
+);
+Class::self->readable_variables qw(name network port);
 
 ########
 # public

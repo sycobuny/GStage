@@ -6,8 +6,7 @@ use strict;
 use Method::Signatures;
 
 our (%target, %operation, %mode, %parameter);
-__PACKAGE__->variables(\(%target, %operation, %mode, %parameter));
-__PACKAGE__->readers( qw(target operation mode parameter) );
+Class::self->readable_variables qw(target operation mode parameter);
 
 method parse($arguments) {
     my ($t, $m, $p) = split(' ', $arguments);

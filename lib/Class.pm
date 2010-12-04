@@ -8,6 +8,12 @@ method new($class:) {
     die "Can't instantiate a class!\n";
 }
 
+func in {
+    my ($package) = caller;
+    Class::exists($package) ? $package : undef;
+}
+*self = *in{CODE};
+
 func exists($class) {
     no strict 'refs';
     scalar(%{$class . '::'});

@@ -13,11 +13,8 @@ use threads;
 use threads::shared;
 
 our (%time, %repeat, %block);
-__PACKAGE__->variables(\(
-    %time,
-    %repeat,
-    %block,
-));
+Class::self->private_variables qw(block);
+Class::self->readable_variables qw(time repeat);
 
 method initialize($time, $repeat, $block) {
     $time{id $self} = $time;
@@ -46,8 +43,5 @@ method every($class: $time, $block) {
 method stop {
     $thread{id $self}->exit();
 }
-
-method time { $time{id $self} }
-method repeat { $repeat{id $self} }
 
 1;

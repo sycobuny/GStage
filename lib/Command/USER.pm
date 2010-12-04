@@ -6,8 +6,7 @@ use strict;
 use Method::Signatures;
 
 our (%username, %hostname, %servername, %realname);
-__PACKAGE__->variables(\(%username, %hostname, %servername, %realname));
-__PACKAGE__->readers( qw(username hostname servername realname) );
+Class::self->readable_variables qw(username hostname servername realname);
 
 my ($re) = qr/
               ^                # anchor to start of string

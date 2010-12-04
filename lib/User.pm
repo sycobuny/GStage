@@ -9,8 +9,7 @@ use Hash::Util::FieldHash qw(id);
 use constant COMMANDRE => qr/^\s*([a-z]+)(?:\s+(.*))$/i;
 
 # class variables
-our (%server, %socket, %fragment, %nickname, %username, %mask, %channels);
-__PACKAGE__->variables(\(
+our (
     %server,    # the server we're connected to
     %socket,    # raw connection to the server
     %fragment,  # unfinished line fragment from the socket
@@ -18,7 +17,9 @@ __PACKAGE__->variables(\(
     %username,  # IRC username
     %mask,      # the masked host (saving cycles)
     %channels,  # the channels this user has joined
-));
+);
+Class::self->readable_variables qw(server socket nickname username mask);
+Class::self->private_variables qw(fragment channels);
 
 my (@masks);
 
@@ -110,8 +111,6 @@ method hostmask {
             $mask{id $self});
 }
 
-method server { $server{id $self} }
-method socket { $socket{id $self} }
 method channels { values %{ $channels{id $self} } }
 
 ################
