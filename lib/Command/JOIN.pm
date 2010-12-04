@@ -1,5 +1,5 @@
 package Command::JOIN;
-@{__PACKAGE__.'::ISA'} = qw(Command);
+@ISA = qw(Command);
 
 use warnings;
 use strict;
