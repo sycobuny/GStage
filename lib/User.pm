@@ -8,8 +8,6 @@ use IO::File;
 use Hash::Util::FieldHash qw(id);
 use constant COMMANDRE => qr/^\s*([a-z]+)(?:\s+(.*))$/i;
 
-use User::Handlers;
-
 # class variables
 our (%server, %socket, %fragment, %nickname, %username, %mask, %channels);
 __PACKAGE__->variables(\(
@@ -22,7 +20,7 @@ __PACKAGE__->variables(\(
     %channels,  # the channels this user has joined
 ));
 
-my (@masks, %commands);
+my (@masks);
 
 ########
 # public
@@ -78,30 +76,15 @@ method read_data {
 }
 
 method parse($line) {
-    my ($command, $arguments);
+    my ($cmd);
     local ($1, $2);
 
     if ($line =~ COMMANDRE) {
-        ($command, $arguments) = ($1, $2);
+        $cmd = Command->new_from_command($1, $self->server, $self, $2);
 
-        unless (exists $commands{uc $command}) {
-            print "I don't understand $command\n";
-        } else {
-            my ($handler) = lc "handle_$command";
-            my (@arguments) = $arguments =~ $commands{uc $command}[1];
-            print "qr is @{[$commands{uc $command}[1]]}\n";
-            $arguments = {};
-
-            foreach my $argname (@{ $commands{$command}[0] }) {
-                if ($arguments[0] || $argname =~ /\?$/) {
-                    ($argname) = $argname =~ /(.*)\??$/;
-                    $arguments->{$argname} = shift(@arguments);
-                } else {
-                    print "Missing required argument $argname from $command\n";
-                }
-            }
-
-            $self->$handler($arguments);
+        if ($cmd) { $cmd->run() }
+        else {
+            print "whoops, bad command!\n";
         }
     }
 }
@@ -143,17 +126,5 @@ foreach my $i (1..4) {
         exit(0);
     }
 }
-
-%commands = (
-    JOIN => [
-        [ qw(channel key?) ],
-        qr/^\:?([&#][\S]+)(?:\s+(\S*))?$/
-    ],
-
-    PRIVMSG => [
-        [ qw(target message) ],
-        qr/^([&#]?[\S]+)\s+\:(.*)$/
-    ],
-);
 
 1;

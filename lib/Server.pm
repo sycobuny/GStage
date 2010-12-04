@@ -7,6 +7,7 @@ use Method::Signatures;
 use IO::Socket::INET;
 use IO::Select;
 
+use Command;
 use User;
 #use Channel;
 
