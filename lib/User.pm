@@ -92,17 +92,17 @@ method parse($line) {
 
 method add_to_channel($channel) {
     my ($channels) = $channels{id $self};
-    return if $channels{$channel->name};
+    return if $channels{$channel->match};
 
-    $channels{$channel->name} = $channel;
+    $channels{$channel->match} = $channel;
     $channel->add_user($self);
 }
 
 method remove_from_channel($channel) {
     my ($channels) = $channels{id $self};
-    return unless $channels{$channel->name};
+    return unless $channels{$channel->match};
 
-    delete $channels{$channel->name};
+    delete $channels{$channel->match};
     $channel->delete_user($self);
 }
 
@@ -110,6 +110,8 @@ method hostmask {
     sprintf("%s!%s@%s", $nickname{id $self}, $username{id $self},
             $mask{id $self});
 }
+
+method match { lc $nickname{id $self} }
 
 method channels { values %{ $channels{id $self} } }
 

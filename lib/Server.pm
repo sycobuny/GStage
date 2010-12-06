@@ -9,7 +9,7 @@ use IO::Select;
 
 use Command;
 use User;
-#use Channel;
+use Channel;
 
 # class variables
 our (
