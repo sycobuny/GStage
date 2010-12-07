@@ -10,7 +10,8 @@ our (
     %key,            # a channel key, for auto-opping
     %limit,          # a channel limit
     %message_locked, # whether the channel is message locked
-    %topic_locked,   # whether the channel is topc lockfed
+    %topic_locked,   # whether the channel is topic locked
+    %moderated,      # whether the channel is moderated
     %permanent,      # whether the channel is permanent
     %secret,         # whether the channel is secret
     %topic,          # the topic for the channel
@@ -22,7 +23,7 @@ our (
 );
 Class::self->public_variables qw(key topic);
 Class::self->readable_variables qw(
-    name match limit message_locked topic_locked permanent secret
+    name match limit message_locked topic_locked moderated permanent secret
 );
 Class::self->private_variables qw(userlist oplist hoplist voicelist bozolist);
 
@@ -30,6 +31,10 @@ my ($add_user, $check_user, $delete_user, $set, $unset);
 my (@spoofs);
 
 sub BOZO_TIMEOUT() { 180 }
+sub BC_OP()     { 0x1           } # ops
+sub BC_HALFOP() { 0x2|BC_OP     } # halfops and ops
+sub BC_VOICE()  { 0x4|BC_HALFOP } # voices, halfops and ops
+sub BC_ALL()    { 0x8|BC_VOICE  } # everyone (default)
 
 ########
 # public
@@ -62,6 +67,29 @@ method generate_match($class: $name) {
     }
 
     $match;
+}
+
+method broadcast($method, $level, @arguments) {
+    my (%lists, %broadcast_to);
+    $level ||= BC_ALL;
+
+    # make a list lookup for each broadcast level
+    %lists = (
+        BC_OP,     $oplist{id $self},
+        BC_HALFOP, $hoplist{id $self},
+        BC_VOICE,  $voicelist{id $self},
+        BC_ALL,    $userlist{id $self},
+    );
+
+    # continually merge in users for all lists that match using some wacky
+    # perl semantics - this is faster than flattening the items out into a
+    # list and reassigning the whole thing back into %broadcast_to
+    foreach my $l (keys %lists) {
+        @broadcast_to{keys %{ $lists{$l} }} = values %{ $lists{$l} };
+    }
+
+    # finally, broadcast the message to the selected users
+    foreach my $user (values %broadcast_to) { $user->$method(@arguments) }
 }
 
 method add_user($user) {
@@ -137,14 +165,16 @@ method set_limit($limit) {
 method unset_limit { $limit{id $self} = undef }
 
 method set_message_locked { $self->$set(\%message_locked) }
-method set_topic_locked   { $self->set(\%topic_locked) }
-method set_permanent      { $self->set(\%permanent) }
-method set_secret         { $self->set(\%secret) }
+method set_topic_locked   { $self->$set(\%topic_locked) }
+method set_moderated      { $self->$set(\%moderated) }
+method set_permanent      { $self->$set(\%permanent) }
+method set_secret         { $self->$set(\%secret) }
 
-method unset_message_locked { $self->unset(\%message_locked) }
-method unset_topic_locked   { $self->unset(\%topic_locked) }
-method unset_permanent      { $self->unset(\%permanent) }
-method unset_secret         { $self->unset(\%secret) }
+method unset_message_locked { $self->$unset(\%message_locked) }
+method unset_topic_locked   { $self->$unset(\%topic_locked) }
+method unset_moderated      { $self->$unset(\%moderated) }
+method unset_permanent      { $self->$unset(\%permanent) }
+method unset_secret         { $self->$unset(\%secret) }
 
 method users   { values %{ $userlist{id $self} } }
 method ops     { values %{ $oplist{id $self} } }
