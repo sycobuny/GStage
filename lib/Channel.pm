@@ -38,10 +38,6 @@ my ($add_user, $check_user, $delete_user, $set, $unset);
 my (@spoofs);
 
 sub BOZO_TIMEOUT() { 180 }
-sub BC_OP()     { 0x1           } # ops
-sub BC_HALFOP() { 0x2|BC_OP     } # halfops and ops
-sub BC_VOICE()  { 0x4|BC_HALFOP } # voices, halfops and ops
-sub BC_ALL()    { 0x8|BC_VOICE  } # everyone (default)
 
 ########
 # public
@@ -76,27 +72,10 @@ method generate_match($class: $name) {
     $match;
 }
 
-method broadcast($method, $level, @arguments) {
-    my (%lists, %broadcast_to);
-    $level ||= BC_ALL;
-
-    # make a list lookup for each broadcast level
-    %lists = (
-        BC_OP,     $oplist{id $self},
-        BC_HALFOP, $hoplist{id $self},
-        BC_VOICE,  $voicelist{id $self},
-        BC_ALL,    $userlist{id $self},
-    );
-
-    # continually merge in users for all lists that match using some wacky
-    # perl semantics - this is faster than flattening the items out into a
-    # list and reassigning the whole thing back into %broadcast_to
-    foreach my $l (keys %lists) {
-        @broadcast_to{keys %{ $lists{$l} }} = values %{ $lists{$l} };
+method broadcast($message) {
+    foreach my $user (values %{ userlist{id $self}) {
+        $user->write($message);
     }
-
-    # finally, broadcast the message to the selected users
-    foreach my $user (values %broadcast_to) { $user->$method(@arguments) }
 }
 
 method add_user($user) {

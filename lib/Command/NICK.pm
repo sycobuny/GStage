@@ -50,7 +50,7 @@ method run {
             $origin->set_nickname($nickname);
 
             foreach my $channel ($origin->channels) {
-                $channel->broadcast('write', 0, $message);
+                $channel->broadcast($message);
             }
         } else {
             $origin->numeric(ERR_ERRONEOUSNICKNAME, $nickname);
