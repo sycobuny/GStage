@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Class.pm: helper methods for dealing with Perl classes
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Class;
 
 use warnings;

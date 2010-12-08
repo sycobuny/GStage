@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/User.pm: user management; channel membership, state, command parsing, etc.
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package User;
 
 use warnings;

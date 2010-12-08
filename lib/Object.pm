@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Object.pm: provide better OOP behavior for Perl
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Object;
 
 use warnings;

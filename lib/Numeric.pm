@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Numeric.pm: easy packaging of RFC 1459 numerics
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Numeric;
 
 use warnings;

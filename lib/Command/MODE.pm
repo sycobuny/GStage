@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Command/MODE.pm: handle MODE commands
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Command::MODE;
 @ISA = qw(Command);
 

@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Command.pm: abstract base class for dealing with IRC commands
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Command;
 
 use warnings;

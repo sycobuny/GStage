@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Command/PART.pm: handle PART commands
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Command::PART;
 @ISA = qw(Command);
 

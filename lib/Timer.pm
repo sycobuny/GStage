@@ -1,6 +1,13 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Timer.pm: thread-based timers
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 # this class is a pretty straightforward port of the Timer class from the
 # rhuidean ruby IRC library by rakaur. Note that while Ruby is thread-safe by
-# default, perl is not. I intend to work on this and make it more intelligent
+# default, Perl is not. I intend to work on this and make it more intelligent
 # later, once I really understand Perl threads, but this does the job for now.
 
 package Timer;
@@ -28,8 +35,6 @@ method initialize($time, $repeat, $block) {
             last unless $repeat;
         }
     });
-
-    return $self;
 }
 
 method after($class: $time, $block) {

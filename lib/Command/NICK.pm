@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Command/NICK.pm: handle NICK commands
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Command::NICK;
 @ISA = qw(Command);
 

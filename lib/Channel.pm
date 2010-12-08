@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Channel.pm: manage channels; membership, state, etc.
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Channel;
 
 use warnings;

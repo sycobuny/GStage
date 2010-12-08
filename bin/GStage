@@ -1,4 +1,10 @@
 #!/usr/bin/perl
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# bin/GStage: Starts up the Server instance
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
 
 use warnings;
 use strict;

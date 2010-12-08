@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Command/USER.pm: handle USER commands
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Command::USER;
 @ISA = qw(Command);
 

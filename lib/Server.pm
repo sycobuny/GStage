@@ -1,3 +1,10 @@
+#
+# GStage: a ridiculously (and intentionally) buggy IRC server
+# lib/Server.pm: core server; accept and manage connections, users and channels
+#
+# Copyright (c) 2010 Stephen Belcher (sycobuny)
+#
+
 package Server;
 
 use warnings;
