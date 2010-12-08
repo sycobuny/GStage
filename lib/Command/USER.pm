@@ -5,6 +5,11 @@ use warnings;
 use strict;
 use Method::Signatures;
 
+use Numeric qw(
+    ERR_ALREADYREGISTERED
+    ERR_NEEDMOREPARAMS
+);
+
 our (%username, %hostname, %servername, %realname);
 Class::self->readable_variables qw(username hostname servername realname);
 
@@ -26,10 +31,29 @@ method parse($arguments) {
 }
 
 method run {
-    print "running a USER for @{[$self->username]}, ";
-    print "from @{[$self->hostname]}, ";
-    print "connecting to @{[$self->hostname]}, ";
-    print "known in real life as @{[$self->realname]}\n";
+    my ($origin, $username, $hostname, $servername, $realname);
+    $origin = $self->origin;
+
+    if ($origin->username) {
+        $origin->numeric(ERR_ALREADYREGISTERED);
+        return;
+    }
+
+    $username   = $username{id $self};
+    $hostname   = $hostname{id $self};
+    $servername = $servername{id $self};
+    $realname   = $realname{id $self};
+
+    unless ($username && $hostname && $servername && $realname) {
+        $origin->numeric(ERR_NEEDMOREPARAMS, 'USER');
+        return;
+    }
+
+    $origin->set_username($username);
+    $origin->set_realname($realname);
+
+    $self->server->welcome($origin)
+        if ($origin->nickname);
 }
 
 1;

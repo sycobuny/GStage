@@ -15,10 +15,12 @@ our (
     %fragment,  # unfinished line fragment from the socket
     %nickname,  # IRC nickname
     %username,  # IRC username
-    %mask,      # the masked host (saving cycles)
+    %realname,  # user's real name
+    %mask,      # the masked host (cached to save cycles)
     %channels,  # the channels this user has joined
 );
-Class::self->readable_variables qw(server socket nickname username mask);
+Class::self->public_variables qw(username realname);
+Class::self->readable_variables qw(server socket nickname mask);
 Class::self->private_variables qw(fragment channels);
 
 my (@masks);
@@ -111,8 +113,33 @@ method hostmask {
             $mask{id $self});
 }
 
-method match { lc $nickname{id $self} }
+method set_nickname($nickname) {
+    my ($server) = $server{id $self};
 
+    $server->register($self, $nickname);
+    $nickname{id $self} = $nickname;
+}
+
+method numeric($numeric, @arguments?) {
+    my ($server)   = $server{id $self};
+    my ($nickname) = $nickname{id $self} || '-';
+    my ($format)   = $Numeric::format{$numeric};
+    my ($message)  = '';
+
+    $message .= sprintf(":%s %03d %s ", $server->address, $numeric, $nickname);
+    $message .= sprintf($format, @arguments);
+
+    $self->write($message);
+}
+
+method write($line) {
+    my ($socket) = $socket{id $self};
+    $socket->print("$line\r\n");
+}
+
+method prefix($line?) { ":@{[$self->hostmask]} $line" }
+method is_supervisor { $server{id $self}->is_supervisor($self) }
+method match { lc $nickname{id $self} }
 method channels { values %{ $channels{id $self} } }
 
 ################
