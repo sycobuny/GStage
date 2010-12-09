@@ -73,7 +73,7 @@ method generate_match($class: $name) {
 }
 
 method broadcast($message) {
-    foreach my $user (values %{ userlist{id $self}) {
+    foreach my $user (values %{ $userlist{id $self} }) {
         $user->write($message);
     }
 }

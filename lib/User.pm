@@ -25,12 +25,16 @@ our (
     %realname,  # user's real name
     %mask,      # the masked host (cached to save cycles)
     %channels,  # the channels this user has joined
+    %qlimit,    # the maximum length of the sendq
+    %gagged,    # whether the user is gagged
 );
 Class::self->public_variables qw(username realname);
-Class::self->readable_variables qw(server socket nickname mask);
+Class::self->readable_variables qw(server socket nickname mask qlimit gagged);
 Class::self->private_variables qw(fragment channels);
 
 my (@masks);
+
+sub MAX_QLIMIT() { 1 << 31 }
 
 ########
 # public
@@ -143,6 +147,17 @@ method write($line) {
     my ($socket) = $socket{id $self};
     $socket->print("$line\r\n");
 }
+
+method set_qlimit($qlimit) {
+    return unless $qlimit =~ /^\d+$/;
+    $qlimit = MAX_QLIMIT
+        if ($qlimit > MAX_QLIMIT);
+
+    $qlimit{id $self} = $qlimit;
+}
+
+method set_gagged   { $gagged{id $self} = 1 }
+method unset_gagged { $gagged{id $self} = 0 }
 
 method prefix($line?) { ":@{[$self->hostmask]} $line" }
 method is_supervisor { $server{id $self}->is_supervisor($self) }

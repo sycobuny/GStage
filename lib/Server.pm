@@ -163,6 +163,7 @@ method is_running { 1 }
 {
     if ((my $fh = IO::File->new)->open("etc/MOTD", 'r')) {
         @motd = $fh->getlines();
+        chomp @motd;
     } else {
         print "Couldn't read etc/MOTD, sup wit dat?\n";
         exit(0);
