@@ -26,10 +26,13 @@ our (
     %mask,      # the masked host (cached to save cycles)
     %channels,  # the channels this user has joined
     %qlimit,    # the maximum length of the sendq
-    %gagged,    # whether the user is gagged
+    %gagged,    # whether the user is gagged (can't send privmsg/notice)
+    %private,   # whether the user is "private" (can't receive PM)
 );
 Class::self->public_variables qw(username realname);
-Class::self->readable_variables qw(server socket nickname mask qlimit gagged);
+Class::self->readable_variables qw(
+    server socket nickname mask qlimit gagged private
+);
 Class::self->private_variables qw(fragment channels);
 
 my (@masks);
@@ -46,7 +49,7 @@ method initialize($server, $socket) {
     $mask = '';
     @octets = reverse split(/\./, $socket->peerhost);
 
-    foreach my $index (0..3) { $mask .= $masks[$index][ $octets[$index] ] }
+    foreach my $index (0..3) { $mask .= $masks[$index][$octets[$index]] . '.' }
     $mask .= 'this.chat.server';
 
     $server{id $self}   = $server;
@@ -98,7 +101,7 @@ method parse($line) {
 
         if ($cmd) { $cmd->run() }
         else {
-            print "whoops, bad command!\n";
+            $self->numeric(Numeric::ERR_UNKNOWNCOMMAND, uc($1));
         }
     }
 }
@@ -127,8 +130,15 @@ method hostmask {
 method set_nickname($nickname) {
     my ($server) = $server{id $self};
 
-    $server->register($self, $nickname);
-    $nickname{id $self} = $nickname;
+    # this is kind of ridiculous.
+    if ($nickname{id $self}) {
+        $server->register($self, $nickname);
+        $nickname{id $self} = $nickname;
+    }
+    else {
+        $nickname{id $self} = $nickname;
+        $server->register($self, $nickname);
+    }
 }
 
 method numeric($numeric, @arguments?) {
@@ -158,6 +168,9 @@ method set_qlimit($qlimit) {
 
 method set_gagged   { $gagged{id $self} = 1 }
 method unset_gagged { $gagged{id $self} = 0 }
+
+method set_private   { $private{id $self} = 1 }
+method unset_private { $private{id $self} = 0 }
 
 method prefix($line?) { ":@{[$self->hostmask]} $line" }
 method is_supervisor { $server{id $self}->is_supervisor($self) }

@@ -23,18 +23,20 @@ our (
     %name,        # server name
     %network,     # IRC network
     %port,        # port clients will connect to
-    %socket,      # duh.
-    %userlist,    # duh.
-    %channellist, # duh.
+    %socket,      # the main listen socket for the server
+    %uuserlist,   # unregistered user list
+    %userlist,    # registered user list
+    %channellist, # all channels
     %banlist,     # user blacklist for connecting
     %supervisors, # a list of registered supervisors
     %supercount,  # a separate count of supervisors (to preserve a bug)
     %eventlist,   # pending events, handled elsewhere
+    %created,     # when the server was started
 );
 Class::self->private_variables qw(
     socket userlist channellist banlist eventlist
 );
-Class::self->readable_variables qw(name network port);
+Class::self->readable_variables qw(name network port created);
 
 my (@motd);
 
@@ -43,7 +45,7 @@ my (@motd);
 ########
 
 method initialize($name, $network, $port = 6667) {
-    my ($socket, $select, $userlist, $eventlist, @sockets);
+    my ($socket, $select, $uuserlist, $userlist, $eventlist, @sockets);
 
     $name{id $self}        = $name;
     $network{id $self}     = $network;
@@ -54,14 +56,23 @@ method initialize($name, $network, $port = 6667) {
         Proto     => 'tcp',
         Listen    => 10,
     );
+    $uuserlist{id $self}   = $uuserlist = {};
     $userlist{id $self}    = $userlist = {};
     $channellist{id $self} = {};
     $banlist{id $self}     = {};
     $eventlist{id $self}   = $eventlist = {};
     $supervisors{id $self} = {};
     $supercount{id $self}  = 0;
+    $created{id $self}     = localtime;
 
     $select = IO::Select->new($socket);
+
+    $SIG{INT} = sub {
+        print "Caught sigint, exiting...\n";
+
+        foreach my $sock ($select->handles) { $sock->close() }
+        exit(0);
+    };
 
     print "Server set up at @{[$self->address]}, looping...\n";
 
@@ -81,7 +92,7 @@ method initialize($name, $network, $port = 6667) {
                     $csocket->close();
                 } else {
                     $select->add($csocket);
-                    $userlist{$user->id} = $user;
+                    $uuserlist{id $user} = $user;
                 }
             } else {
                 my ($user) = User->find_user($rsocket);
@@ -98,6 +109,9 @@ method initialize($name, $network, $port = 6667) {
 method register($user, $nickname) {
     my ($userlist) = $userlist{id $self};
     my (@channels, %voices, %halfops, %ops) = $user->channels;
+
+    # remove any unregistered entry for this user
+    delete $uuserlist{id $self}{id $user};
 
     if ($user->nickname) {
         foreach my $channel (@channels) {
@@ -135,7 +149,7 @@ method find_user($nickname) {
 method welcome($user) {
     $user->numeric(Numeric::RPL_WELCOME, $user->nickname);
     $user->numeric(Numeric::RPL_YOURHOST, $self->address);
-    $user->numeric(Numeric::RPL_CREATED, 'time, which bitches love.');
+    $user->numeric(Numeric::RPL_CREATED, $self->created);
     $user->numeric(Numeric::RPL_MYINFO, 'GStage', '0.1', 'qs', 'imnst');
 
     $self->send_motd($user);
@@ -151,6 +165,12 @@ method send_motd($user) {
 }
 
 method address { "$name{id $self}.$network{id $self}" }
+
+method is_supervisor($user) {
+    my ($supervisors) = $supervisors{id $self};
+
+    exists($supervisors->{id $user}) and defined($supervisors->{id $user});
+}
 
 method is_banned { 0 }
 
