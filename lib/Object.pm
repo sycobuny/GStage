@@ -76,6 +76,8 @@ method public_variables($class: @variables) {
 
 method new($class:) {
     my ($package) = Class::get($class);
+    die "Attempted to create object of undeclared class $class" unless $package;
+
     my ($self) = bless(\(my $o = $generate_uuid->()), $package);
     $objlookup{$$self} = $self;
 
@@ -162,6 +164,17 @@ $declare_variable = method($class: $name) {
         unless ($vars{$package}{$name} &&
                 (id($vars{$package}{$name}) == id($store)));
     $vars{$package}{$name} = $store;
+};
+
+########################
+# some kinda black magic
+########################
+
+package CORE;
+
+*CORE::GLOBAL::die = sub {
+    use Carp qw();
+    CORE::die Carp::longmess(@_);
 };
 
 1;
