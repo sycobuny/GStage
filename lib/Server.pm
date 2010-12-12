@@ -24,6 +24,7 @@ our (
     %network,     # IRC network
     %port,        # port clients will connect to
     %socket,      # the main listen socket for the server
+    %select,      # the select() queue for checking read/connect readiness
     %uuserlist,   # unregistered user list
     %userlist,    # registered user list
     %channellist, # all channels
@@ -34,7 +35,7 @@ our (
     %created,     # when the server was started
 );
 Class::self->private_variables qw(
-    socket userlist channellist banlist eventlist
+    socket select userlist channellist banlist eventlist
 );
 Class::self->readable_variables qw(name network port created);
 
@@ -65,7 +66,7 @@ method initialize($name, $network, $port = 6667) {
     $supercount{id $self}  = 0;
     $created{id $self}     = localtime;
 
-    $select = IO::Select->new($socket);
+    $select{id $self} = $select = IO::Select->new($socket);
 
     $SIG{INT} = sub {
         print "Caught sigint, exiting...\n";
@@ -137,20 +138,43 @@ method register($user, $nickname) {
         }
     }
 
-    $userlist->{ $user->match } = $user;
+    $userlist->{ User->generate_match($nickname) } = $user;
+}
+
+method disconnect($socket, $message?) {
+    my ($user) = User->find_user($socket);
+
+    if ($user->is_registered) {
+        my ($qmessage) = $user->prefix("QUIT :(signed off)");
+        my (@channels) = $user->channels;
+
+        foreach my $channel (@channels) {
+            $channel->broadcast($qmessage);
+            $channel->delete_user($user);
+        }
+
+        delete($uuserlist{id $self}{id $user});
+        delete($userlist{id $self}{$user->match});
+        $select{id $self}->remove($user->socket);
+
+        $socket->write($qmessage);
+    }
+
+    $socket->close();
 }
 
 method find_channel($channame) {
     my ($chanlist) = $channellist{id $self};
-    my ($match) = Channel->match($channame);
+    my ($match) = Channel->generate_match($channame);
 
     exists($chanlist->{$match}) ? $chanlist->{$match} : undef;
 }
 
 method find_user($nickname) {
     my ($userlist) = $userlist{id $self};
+    my ($match) = User->generate_match($nickname);
 
-    exists($userlist->{lc $nickname}) ? $userlist->{lc $nickname} : undef;
+    exists($userlist->{$match}) ? $userlist->{$match} : undef;
 }
 
 method welcome($user) {

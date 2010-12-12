@@ -20,7 +20,7 @@ method parse($arguments) {
 }
 
 method run {
-    print "running a QUIT for @{[$self->message]}\n";
+    $self->server->disconnect( $self->origin->socket, $self->message );
 }
 
 1;

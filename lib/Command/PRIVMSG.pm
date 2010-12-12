@@ -50,7 +50,7 @@ method run {
     $targets = $targets{id $self};
     $message = $message{id $self};
 
-    unless ($origin->nickname and $origin->username) {
+    unless ($origin->is_registered) {
         $origin->numeric(ERR_NOTREGISTERED);
         return;
     }

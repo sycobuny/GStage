@@ -60,6 +60,8 @@ method initialize($server, $socket) {
     return $self;
 }
 
+method generate_match($class: $nickname) { lc $nickname }
+
 method find_user($class: $socket) {
     foreach my $id (keys %socket) {
         return Hash::Util::FieldHash::id_2obj($id)
@@ -173,9 +175,11 @@ method set_private   { $private{id $self} = 1 }
 method unset_private { $private{id $self} = 0 }
 
 method prefix($line?) { ":@{[$self->hostmask]} $line" }
-method is_supervisor { $server{id $self}->is_supervisor($self) }
-method match { lc $nickname{id $self} }
+method match { $self->generate_match($nickname{id $self}) }
 method channels { values %{ $channels{id $self} } }
+
+method is_supervisor { $server{id $self}->is_supervisor($self) }
+method is_registered { $nickname{id $self} and $username{id $self} }
 
 ################
 # initialization
