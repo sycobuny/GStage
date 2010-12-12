@@ -56,9 +56,7 @@ method run {
     }
 
     # gagged users simply have their messages dropped
-    if ($origin->gagged and !$origin->is_supervisor) {
-        return;
-    }
+    return if ($origin->gagged and !$origin->is_supervisor);
 
     unless ($message) {
         $origin->numeric(ERR_NOTEXTTOSEND);
@@ -77,8 +75,8 @@ method run {
         last if (++$recipient > MAX_TARGETS);
 
         # don't bother checking this recipient if we've already checked them
-        next if (exists($bad_recipients{$target}) or
-                 exists($void_recipients{$target}));
+        # and found them wanting
+        next if ($bad_recipients{$target} or $void_recipients{$target});
 
         if ($target =~ $chanre) {
             $recipient = $server->find_channel($target);

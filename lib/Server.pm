@@ -140,6 +140,13 @@ method register($user, $nickname) {
     $userlist->{ $user->match } = $user;
 }
 
+method find_channel($channame) {
+    my ($chanlist) = $channellist{id $self};
+    my ($match) = Channel->match($channame);
+
+    exists($chanlist->{$match}) ? $chanlist->{$match} : undef;
+}
+
 method find_user($nickname) {
     my ($userlist) = $userlist{id $self};
 
