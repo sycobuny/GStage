@@ -12,6 +12,7 @@ use strict;
 use Method::Signatures;
 
 our (
+    %server,         # the server this channel is located on
     %name,           # channel name, as presented on first join
     %match,          # a matchable version, for hash keys/etc. (cached)
     %key,            # a channel key, for auto-opping
@@ -30,7 +31,8 @@ our (
 );
 Class::self->public_variables qw(key topic);
 Class::self->readable_variables qw(
-    name match limit message_locked topic_locked moderated permanent secret
+    server name match limit message_locked topic_locked moderated permanent
+    secret
 );
 Class::self->private_variables qw(userlist oplist hoplist voicelist bozolist);
 
@@ -43,7 +45,8 @@ sub BOZO_TIMEOUT() { 180 }
 # public
 ########
 
-method initialize($name, $key = '') {
+method initialize($server, $name) {
+    $server{id $self} = $server;
     $name{id $self} = $name;
     $match{id $self} = $self->generate_match($name);
 
@@ -60,6 +63,8 @@ method initialize($name, $key = '') {
     $hoplist{id $self}   = {};
     $voicelist{id $self} = {};
     $bozolist{id $self}  = {};
+
+    $server->create_channel($self);
 }
 
 method generate_match($class: $name) {
@@ -95,6 +100,10 @@ method delete_user($user) {
     $self->delete_voice($user);
 
     $user->remove_from_channel($self);
+
+    unless (scalar(keys %{ $userlist{id $self} }) or $self->permanent) {
+        $self->server->destroy_channel($self);
+    }
 }
 
 method add_op($user)    { $self->$add_user($user, \%oplist) }
@@ -172,10 +181,7 @@ method voices  { values %{ $voicelist{id $self} } }
 #########
 
 $add_user = method($user, $listref) {
-    my ($list) = $listref->{id $self};
-
-    return if $list->{$user->match};
-    delete $list->{$user->match};
+    $listref->{id $self}{$user->match} = $user;
 };
 
 $check_user = method($user, $listref) {
@@ -184,10 +190,7 @@ $check_user = method($user, $listref) {
 };
 
 $delete_user = method($user, $listref) {
-    my ($list) = $listref->{id $self};
-
-    return unless $list->{$user->match};
-    delete $list->{$user->match};
+    delete $listref->{id $self}{$user->match};
 };
 
 $set   = method($mode) { $mode->{id $self} = 1 };

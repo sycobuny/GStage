@@ -147,20 +147,33 @@ method disconnect($socket, $message?) {
     if ($user->is_registered) {
         my ($qmessage) = $user->prefix("QUIT :(signed off)");
         my (@channels) = $user->channels;
+        my (@users, %users);
 
         foreach my $channel (@channels) {
-            $channel->broadcast($qmessage);
+            foreach my $u ($channel->users) { $users{$u->match} = $u }
             $channel->delete_user($user);
         }
+
+        delete $users{$user->match}; # we handle the user itself later
+        foreach my $u (values %users) { $u->write($qmessage) }
 
         delete($uuserlist{id $self}{id $user});
         delete($userlist{id $self}{$user->match});
         $select{id $self}->remove($user->socket);
 
+        $socket->blocking(0);
         $socket->write($qmessage);
     }
 
     $socket->close();
+}
+
+method create_channel($channel) {
+    $channellist{id $self}{$channel->match} = $channel;
+}
+
+method destroy_channel($channel) {
+    delete $channellist{id $self}{$channel->match};
 }
 
 method find_channel($channame) {

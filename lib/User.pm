@@ -13,7 +13,6 @@ use Method::Signatures;
 
 use IO::File;
 use Hash::Util::FieldHash qw(id);
-use constant COMMANDRE => qr/^\s*([a-z]+)(?:\s+(.*))$/i;
 
 # class variables
 our (
@@ -36,6 +35,7 @@ Class::self->readable_variables qw(
 Class::self->private_variables qw(fragment channels);
 
 my (@masks);
+my ($cmdre) = qr/^\s*(\S+)(?:\s+(.*))$/i;
 
 sub MAX_QLIMIT() { 1 << 31 }
 
@@ -95,10 +95,10 @@ method read_data {
 }
 
 method parse($line) {
-    my ($cmd);
     local ($1, $2);
+    my ($cmd);
 
-    if ($line =~ COMMANDRE) {
+    if ($line =~ $cmdre) {
         $cmd = Command->new_from_command($1, $self->server, $self, $2);
 
         if ($cmd) { $cmd->run() }
@@ -110,17 +110,17 @@ method parse($line) {
 
 method add_to_channel($channel) {
     my ($channels) = $channels{id $self};
-    return if $channels{$channel->match};
+    return if $channels->{$channel->match};
 
-    $channels{$channel->match} = $channel;
+    $channels->{$channel->match} = $channel;
     $channel->add_user($self);
 }
 
 method remove_from_channel($channel) {
     my ($channels) = $channels{id $self};
-    return unless $channels{$channel->match};
+    return unless $channels->{$channel->match};
 
-    delete $channels{$channel->match};
+    delete $channels->{$channel->match};
     $channel->delete_user($self);
 }
 
@@ -180,6 +180,10 @@ method channels { values %{ $channels{id $self} } }
 
 method is_supervisor { $server{id $self}->is_supervisor($self) }
 method is_registered { $nickname{id $self} and $username{id $self} }
+
+method is_op($channel)     { $channel->is_op($self) }
+method is_halfop($channel) { $channel->is_halfop($self) }
+method is_voice($channel)  { $channel->is_voice($self) }
 
 ################
 # initialization

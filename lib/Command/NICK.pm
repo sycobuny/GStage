@@ -39,6 +39,11 @@ method run {
         return;
     }
 
+    if ($server->find_user($nickname)) {
+        $origin->numeric(ERR_NICKNAMEINUSE, $nickname);
+        return;
+    }
+
     if ($origin->nickname) {
         if ($origin->is_supervisor) {
             if ($server->find_user($nickname)) {
