@@ -181,6 +181,7 @@ method channels { values %{ $channels{id $self} } }
 method is_supervisor { $server{id $self}->is_supervisor($self) }
 method is_registered { $nickname{id $self} and $username{id $self} }
 
+method is_on($channel)     { $channel->is_on($self) }
 method is_op($channel)     { $channel->is_op($self) }
 method is_halfop($channel) { $channel->is_halfop($self) }
 method is_voice($channel)  { $channel->is_voice($self) }

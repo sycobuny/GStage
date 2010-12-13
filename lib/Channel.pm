@@ -37,6 +37,7 @@ Class::self->readable_variables qw(
 Class::self->private_variables qw(userlist oplist hoplist voicelist bozolist);
 
 my ($add_user, $check_user, $delete_user, $set, $unset);
+my ($originre) = qr/^\:([^\!]+)\!/;
 my (@spoofs);
 
 sub BOZO_TIMEOUT() { 180 }
@@ -77,8 +78,16 @@ method generate_match($class: $name) {
     $match;
 }
 
-method broadcast($message) {
+method broadcast($message, $skip_origin = 0) {
+    my ($skip);
+    if ($skip_origin) {
+        my ($origin) = $message =~ $originre;
+        $skip = $self->server->find_user($origin);
+    }
+
     foreach my $user (values %{ $userlist{id $self} }) {
+        next if ($skip_origin and ($skip == $user));
+
         $user->write($message);
     }
 }

@@ -134,10 +134,10 @@ method run {
 
         if ($recipient->isa('Channel')) {
             $target = $recipient->name;
-            $recipient->broadcast($origin->prefix("PRIVMSG $target :$message"));
+            $recipient->broadcast($origin->prefix("PRIVMSG $target :$message"), 1);
         } elsif ($recipient->isa('User')) {
             $target = $recipient->nickname;
-            $recipient->write($origin->prefix("PRIVMSG $target :$message"));
+            $recipient->write($origin->prefix("PRIVMSG $target :$message"), 1);
         }
     }
 }

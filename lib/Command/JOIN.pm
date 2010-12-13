@@ -87,7 +87,9 @@ method run {
         }
 
         $channel->add_user($origin);
-        $channel->add_op($origin) if ($key and ($channel->key eq $key));
+        if ($key and $channel->key and ($channel->key eq $key)) {
+            $channel->add_op($origin);
+        }
 
         $channel->broadcast($origin->prefix("JOIN $channame"));
 
