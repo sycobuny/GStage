@@ -64,14 +64,14 @@ method run {
     }
 
     unless (@$targets) {
-        $origin->numeric(ERR_NORECIPIENT, 'PRIVMSG');
+        $origin->numeric(ERR_NORECIPIENT, 'NOTICE');
         return;
     }
 
     foreach my $target (@$targets) {
         my ($recipient);
 
-        # can only send but so many PRIVMSG commands in one go
+        # can only send but so many NOTICE commands in one go
         last if (++$recipient > MAX_TARGETS);
 
         # don't bother checking this recipient if we've already checked them
@@ -134,10 +134,10 @@ method run {
 
         if ($recipient->isa('Channel')) {
             $target = $recipient->name;
-            $recipient->broadcast($origin->prefix("PRIVMSG $target :$message"), 1);
+            $recipient->broadcast($origin->prefix("NOTICE $target :$message"), 1);
         } elsif ($recipient->isa('User')) {
             $target = $recipient->nickname;
-            $recipient->write($origin->prefix("PRIVMSG $target :$message"), 1);
+            $recipient->write($origin->prefix("NOTICE $target :$message"), 1);
         }
     }
 }
