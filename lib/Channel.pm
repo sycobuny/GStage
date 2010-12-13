@@ -129,7 +129,7 @@ method delete_voice($user) { $self->$delete_user($user, \%voicelist) }
 
 method add_bozo($user) {
     my ($bozos) = $bozolist{id $self};
-    $bozos->{ $user->socket->peerhost } = scalar(localtime) + BOZO_TIMEOUT;
+    $bozos->{ $user->socket->peerhost } = time + BOZO_TIMEOUT;
 }
 
 method is_bozo($user) {
@@ -137,7 +137,7 @@ method is_bozo($user) {
     my ($peerhost) = $user->socket->peerhost;
 
     exists($bozos->{$peerhost}) and defined($bozos->{$peerhost}) and
-    (scalar(localtime) >= $bozos->{$peerhost});
+    (time <= $bozos->{$peerhost});
 }
 
 method remove_bozo($user) {
@@ -150,7 +150,7 @@ method bozos {
 
     foreach my $peerhost (keys %$bozos) {
         delete $bozos->{$peerhost}
-            if ($bozos->{$peerhost} < scalar(localtime));
+            if ($bozos->{$peerhost} < time);
     }
 
     keys %$bozos;
