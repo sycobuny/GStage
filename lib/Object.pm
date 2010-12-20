@@ -123,6 +123,10 @@ method methods($class:) {
             my ($entries) = *{ $klass . '::' }{HASH};
 
             foreach my $entry (keys %{ $entries }) {
+                next if ($klass eq __PACKAGE__ and
+                         (($entry eq 'AUTOLOAD') or
+                          ($entry eq 'DESTROY')));
+
                 $methods{$entry} = 1 if ref(*{$entries->{$entry}}{CODE});
             }
         }
@@ -143,8 +147,35 @@ method accessors($class:) {
     $class->writers(@_);
 }
 
+method method_missing($name, @arguments?) {
+    # necessary to use Carp here as the perl interpreter hasn't gotten to our
+    # custom definition yet and will compile in the core die to the bytecode.
+    # I guess.
+    use Carp;
+    my ($class) = Class::get($self);
+
+    if ($class) {
+        croak qq{Can't locate object method "$name" via package "$class"};
+    } else {
+        my ($package) = ref($self) || $self;
+        croak qq{Attempted to call "$name" on non-existent package "$package"};
+    }
+}
+
 method initialize { }
 method class { ref($self) || 'Class' }
+
+{
+    our ($AUTOLOAD);
+    method AUTOLOAD(@arguments?) {
+        my ($name) = $AUTOLOAD;
+        $name =~ s/.*://;
+
+        $self->method_missing($name, @arguments);
+    }
+
+    method DESTROY { }
+}
 
 #########
 # private
