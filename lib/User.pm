@@ -37,6 +37,7 @@ Class::self->private_variables qw(fragment channels);
 my (@masks);
 my ($cmdre) = qr/^\s*(\S+)(?:\s+(.*))$/i;
 
+sub DEF_QLIMIT() { 1 << 15 }
 sub MAX_QLIMIT() { 1 << 31 }
 
 ########
@@ -56,6 +57,7 @@ method initialize($server, $socket) {
     $socket{id $self}   = $socket;
     $mask{id $self}     = $mask;
     $channels{id $self} = {};
+    $qlimit{id $self}   = DEF_QLIMIT;
 
     return $self;
 }

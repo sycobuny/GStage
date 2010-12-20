@@ -142,7 +142,9 @@ method is_bozo($user) {
 
 method remove_bozo($user) {
     my ($bozos) = $bozolist{id $self};
-    delete $bozos->{ $user->socket->peerhost };
+    my ($host) = $user->isa('User') ? $user->socket->peerhost : $user;
+
+    delete $bozos->{ $host };
 }
 
 method bozos {

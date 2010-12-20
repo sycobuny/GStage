@@ -29,6 +29,7 @@ our (
     %userlist,    # registered user list
     %channellist, # all channels
     %banlist,     # user blacklist for connecting
+    %superpass,   # the password to give oneself supervisor status
     %supervisors, # a list of registered supervisors
     %supercount,  # a separate count of supervisors (to preserve a bug)
     %eventlist,   # pending events, handled elsewhere
@@ -37,7 +38,7 @@ our (
 Class::self->private_variables qw(
     socket select userlist channellist banlist eventlist
 );
-Class::self->readable_variables qw(name network port created);
+Class::self->readable_variables qw(name network port created superpass);
 
 my (@motd);
 
@@ -210,10 +211,22 @@ method send_motd($user) {
 
 method address { "$name{id $self}.$network{id $self}" }
 
+method add_supervisor($user) {
+    my ($supervisors) = $supervisors{id $self};
+
+    $supercount{id $self}++ unless ($supervisors{id $user});
+    $supervisors{id $user} = $user;
+}
+
 method is_supervisor($user) {
     my ($supervisors) = $supervisors{id $self};
 
     exists($supervisors->{id $user}) and defined($supervisors->{id $user});
+}
+
+method delete_supervisor($user) {
+    delete $supervisors{id $self}{id $user};
+    $supercount{id $self}--;
 }
 
 method is_banned { 0 }
