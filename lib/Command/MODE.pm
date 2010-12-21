@@ -330,6 +330,15 @@ method down() { $self->operation eq '-' }
                     $channel->add_op($user);
                 } else {
                     $channel->delete_op($user);
+
+                    if ($user->is_supervisor) {
+                        my ($server) = $self->server;
+                        my ($arguments) = $channel->name .
+                                          " :+o " .
+                                          $user->nickname;
+
+                        Command::MODE($server, $user, $arguments)->run();
+                    }
                 }
             },
         },
@@ -497,7 +506,7 @@ method down() { $self->operation eq '-' }
                     return unless ($qlimit =~ $numre);
                     $user->set_qlimit($qlimit);
                 } else {
-                    $user->set_qlimit(User::DEF_QLIMIT);
+                    $user->set_default_qlimit();
                 }
 
                 # XXX have "system" send the qlimit

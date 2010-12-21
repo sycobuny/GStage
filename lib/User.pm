@@ -13,6 +13,7 @@ use Method::Signatures;
 
 use IO::File;
 use Hash::Util::FieldHash qw(id);
+use Numeric;
 
 # class variables
 our (
@@ -80,20 +81,23 @@ method read_data {
         my ($line);
         local ($1, $2);
 
-        while ($input =~ /^([^\n]*)\r?\n([^\n]*)/) {
+        while ($input =~ /^([^\n]*)\n((?:[\r\n]|.)*)/) {
             if ($fragment) {
                 $line = "$fragment$1";
-                $fragment = ''
+                $fragment = '';
             } else {
                 $line = $1;
             }
 
+            chomp($line);
             $self->parse($line);
             $input = $2;
         }
 
         $fragment = $input;
-    } else { print "sad\n" }
+    } else {
+        $self->server->disconnect($socket, 'Read error');
+    }
 }
 
 method parse($line) {
@@ -103,7 +107,9 @@ method parse($line) {
     if ($line =~ $cmdre) {
         $cmd = Command->new_from_command($1, $self->server, $self, $2);
 
-        if ($cmd) { $cmd->run() }
+        if ($cmd) {
+            $cmd->run();
+        }
         else {
             $self->numeric(Numeric::ERR_UNKNOWNCOMMAND, uc($1));
         }
@@ -147,7 +153,7 @@ method set_nickname($nickname) {
 
 method numeric($numeric, @arguments?) {
     my ($server)   = $server{id $self};
-    my ($nickname) = $nickname{id $self} || '-';
+    my ($nickname) = $nickname{id $self} || '*';
     my ($format)   = $Numeric::format{$numeric};
     my ($message)  = '';
 
@@ -169,6 +175,8 @@ method set_qlimit($qlimit) {
 
     $qlimit{id $self} = $qlimit;
 }
+
+method set_default_qlimit() { $self->set_qlimit(DEF_QLIMIT) }
 
 method set_gagged   { $gagged{id $self} = 1 }
 method unset_gagged { $gagged{id $self} = 0 }
@@ -192,12 +200,28 @@ method is_voice($channel)  { $channel->is_voice($self) }
 # initialization
 ################
 
-foreach my $i (1..4) {
-    if ((my $fh = IO::File->new)->open("etc/hostmasks.$i", 'r')) {
-        push(@masks, [split(/\s+/, join(' ', $fh->getlines()))]);
-    } else {
-        print "Couldn't read etc/hostmask.$i, sup wit dat?\n";
-        exit(0);
+{
+    my ($generate_hostmask) = sub {
+        local ($a, $b);
+        my (%generated_hostmasks);
+
+        $a = $b; # fix a warning
+
+        until (scalar(keys %generated_hostmasks) == 256) {
+            my ($hostmask) = join("", map { chr(ord("a") + rand(25)) } (1..4));
+            $generated_hostmasks{$hostmask} = 1;
+        }
+
+        sort { rand() <=> rand() } keys %generated_hostmasks;
+    };
+
+    foreach my $i (1..4) {
+        if ((my $fh = IO::File->new)->open("etc/hostmasks.$i", 'r')) {
+            push(@masks, [split(/\s+/, join(' ', $fh->getlines()))]);
+        } else {
+            print "Couldn't read etc/hostmask.$i, generating one-run masks\n";
+            push(@masks, $generate_hostmask->());
+        }
     }
 }
 

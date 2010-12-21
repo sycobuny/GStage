@@ -19,8 +19,8 @@ use Method::Signatures;
 use threads;
 use threads::shared;
 
-our (%time, %repeat, %block);
-Class::self->private_variables qw(block);
+our (%time, %repeat, %block, %thread);
+Class::self->private_variables qw(block thread);
 Class::self->readable_variables qw(time repeat);
 
 method initialize($time, $repeat, $block) {
