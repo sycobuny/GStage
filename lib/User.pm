@@ -89,7 +89,7 @@ method read_data {
                 $line = $1;
             }
 
-            chomp($line);
+            $line = substr($line, 0, -1) if (substr($line, -1) eq "\r");
             $self->parse($line);
             $input = $2;
         }
@@ -202,7 +202,7 @@ method is_voice($channel)  { $channel->is_voice($self) }
 
 {
     my ($generate_hostmask) = sub {
-        local ($a, $b);
+        local ($a, $b, $_);
         my (%generated_hostmasks);
 
         $a = $b; # fix a warning

@@ -191,6 +191,9 @@ method find_user($nickname) {
     exists($userlist->{$match}) ? $userlist->{$match} : undef;
 }
 
+method channels { values %{ $channellist{id $self} } }
+method users { values %{ $userlist{id $self} } }
+
 method welcome($user) {
     $user->numeric(Numeric::RPL_WELCOME, $user->nickname);
     $user->numeric(Numeric::RPL_YOURHOST, $self->address);

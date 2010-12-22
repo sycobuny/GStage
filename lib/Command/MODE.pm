@@ -62,8 +62,13 @@ method parse($arguments) {
     my ($o);
 
     $m = $self->stripc($m || '');
-    $o = substr($m, 0, 1);
-    $m = length($m) > 1 ? substr($m, 1, 1) : '';
+
+    if (substr($m, 0, 1) =~ $opre) {
+        $o = substr($m, 0, 1);
+        $m = length($m) > 1 ? substr($m, 1, 1) : '';
+    } else {
+        $m = substr($m, 0, 1);
+    }
 
     $target{id $self} = $t;
     $operation{id $self} = $o;
@@ -159,16 +164,14 @@ method run {
         return;
     }
 
-    if ($receiver->isa('Channel')) {
-        unless ($mode_opts and ($operation =~ $opre)) {
+    unless ($mode_opts) {
+        if ($receiver->isa('Channel')) {
             $origin->numeric(ERR_UMODEUNKNOWNFLAG);
-            return;
+        } else {
+            $origin->numeric(ERR_UNKNOWNMODE, $mode);
         }
-    } else {
-        unless ($mode_opts and (($operation) = $operation =~ $opre)) {
-            $origin->numeric(ERR_UNKNOWNMODE, $operation ? $operation : $mode);
-            return;
-        }
+
+        return;
     }
 
     # check parameter requirement
@@ -251,7 +254,6 @@ method run {
             }
         }
     }
-
 }
 
 method message {

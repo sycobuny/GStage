@@ -13,15 +13,19 @@ use Method::Signatures;
 use Object;
 
 use Command::JOIN;
-use Command::PART;
 use Command::KICK;
-use Command::PRIVMSG;
-use Command::NOTICE;
-use Command::PONG;
-use Command::NICK;
-use Command::USER;
+use Command::LIST;
 use Command::MODE;
+use Command::NICK;
+use Command::NOTICE;
+use Command::PART;
+use Command::PONG;
+use Command::PRIVMSG;
 use Command::QUIT;
+use Command::TOPIC;
+use Command::USER;
+use Command::WHO;
+use Command::WHOIS;
 
 our (%server, %origin, %arguments);
 Class::self->readable_variables qw(server origin arguments);
