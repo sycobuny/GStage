@@ -10,22 +10,16 @@ package Command;
 use warnings;
 use strict;
 use Method::Signatures;
-use Object;
 
-use Command::JOIN;
-use Command::KICK;
-use Command::LIST;
-use Command::MODE;
-use Command::NICK;
-use Command::NOTICE;
-use Command::PART;
-use Command::PONG;
-use Command::PRIVMSG;
-use Command::QUIT;
-use Command::TOPIC;
-use Command::USER;
-use Command::WHO;
-use Command::WHOIS;
+# import all available commands
+BEGIN {
+    foreach my $file (glob 'lib/Command/*.pm') {
+        my ($module) = $file =~ m{lib/Command/(.*)\.pm};
+
+        require $file;
+        "Command::$module"->import();
+    }
+}
 
 our (%server, %origin, %arguments);
 Class::self->readable_variables qw(server origin arguments);
