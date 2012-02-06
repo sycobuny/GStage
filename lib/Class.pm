@@ -23,7 +23,7 @@ func in {
 
 func exists($class) {
     no strict 'refs';
-    scalar(%{$class . '::'});
+    defined(%{$class . '::'});
 }
 
 func get($class) {
